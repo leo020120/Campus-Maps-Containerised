@@ -34,6 +34,13 @@ from api_requests import API_Requests
 import trimesh
 import shapely
 import numpy as np
+from azure.identity import DefaultAzureCredential
+from azure.storage.blob import BlobServiceClient
+
+
+connection_string = "https://campusmapsbuild.blob.core.windows.net/"
+container_name = "campusmapsbuildings"
+default_credential = DefaultAzureCredential()
 
 
 # Not needed in current implementation:
@@ -279,17 +286,26 @@ def create_floor(floor_id: int, offset: list[float] = [0,0,0,0]) -> None:
         if wall.tags['isExternalWall']:
             walls_exterior.append(wall)
 
+    # Blob service client
+    blob_service_client = BlobServiceClient(connection_string, credential=default_credential)
+    #blob_service_client = BlobServiceClient.from_connection_string(connection_string)
+    container_client = blob_service_client.get_container_client(container_name)        
+
     if len(walls_exterior) > 0 or len(columns) > 0:
         scene_outsides = Scene(walls_exterior + columns)
-        scene_outsides.export(f'model_outsides/floor_{floor_id}_outsides.glb')
+        #scene_outsides.export(f'model_outsides/floor_{floor_id}_outsides.glb')
+        scene_outsides.export(container_client.upload_blob(f"model_outsides/floor_{floor_id}_outsides.glb", scene_outsides.scene.export(file_type="glb")))
+  
 
     if len(walls_interior) > 0: 
         scene_insides = Scene(walls_interior)
-        scene_insides.export(f'model_insides/floor_{floor_id}_insides.glb')
+        #scene_insides.export(f'model_insides/floor_{floor_id}_insides.glb')
+        scene_insides.export(container_client.upload_blob(f"model_insides/floor_{floor_id}_insides.glb", scene_insides.scene.export(file_type="glb")))
     
     if len(room_floors) > 0:
         scene_floors = Scene(room_floors)
-        scene_floors.export(f'model_floors/floor_{floor_id}_floors.glb')
+        #scene_floors.export(f'model_floors/floor_{floor_id}_floors.glb')
+        scene_floors.export(container_client.upload_blob(f"model_floors/floor_{floor_id}_floors.glb", scene_floors.scene.export(file_type="glb")))
 
     #scene_all = Scene(walls_exterior + columns + walls_interior + room_floors)
     #scene_all.export(f'floor_{floor_id}_all.glb')
