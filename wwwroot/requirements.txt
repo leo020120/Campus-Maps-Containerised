@@ -1,0 +1,6 @@
+numpy==1.25.0
+flask==2.2.2
+psycopg2-binary
+trimesh
+Werkzeug==2.2.2
+requests
